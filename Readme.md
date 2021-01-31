@@ -1,7 +1,7 @@
 Purpose
 
-These scripts are meant to be run after a run of WRF is finished in order to fill
-databases of the app for management of WRF runs and geoserver layers.
+This script takes delivered messages to rabbitmq server with variable data and imports them
+into geoserver.
 
 #Installation guide
 
