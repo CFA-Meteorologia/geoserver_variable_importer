@@ -5,18 +5,32 @@ import os
 from config import get_config
 import pika
 import sys
+import json
 
 temp_dir = get_config('temp_dir')
 
-try:
-    shutil.rmtree(temp_dir)
-except FileNotFoundError:
-    pass
-os.mkdir(temp_dir)
-
 
 def callback(ch, method, properties, body):
-    print(" [x] Received %r" % body)
+    try:
+        shutil.rmtree(temp_dir)
+    except FileNotFoundError:
+        pass
+    os.mkdir(temp_dir)
+
+    data = json.loads(body.decode())
+    print(F" [ ] Received var: {data['var']}, domain: {data['domain']} from {data['date']}")
+
+    update_geoserver_layer(
+        data['var'],
+        data['data'],
+        data['bounds'],
+        data['date'],
+        data['projection'],
+        data['domain'],
+    )
+
+    print(F" [x] Processed var: {data['var']}, domain: {data['domain']} from {data['date']}")
+    ch.basic_ack(delivery_tag=method.delivery_tag)
 
 
 def main():

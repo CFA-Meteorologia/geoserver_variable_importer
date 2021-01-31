@@ -42,7 +42,6 @@ flake8-rst-docstrings==0.0.12
 flake8-string-format==0.2.3
 flake8-variables-names==0.0.3
 future==0.18.2
-GDAL==2.2.0
 geoserver-restconfig==2.0.4.8
 gisdata==0.5.4
 gitdb==4.0.5
@@ -55,7 +54,6 @@ Jinja2==2.11.2
 MarkupSafe==1.1.1
 mccabe==0.6.1
 mypy-extensions==0.4.3
-netCDF4==1.5.4
 numpy==1.19.4
 packaging==20.4
 pandas==1.1.4
@@ -103,4 +101,5 @@ typing-extensions==3.7.4.3
 urllib3==1.26.2
 virtualenv==20.2.1
 wemake-python-styleguide==0.14.1
+wrapt==1.12.1
 xarray==0.16.1

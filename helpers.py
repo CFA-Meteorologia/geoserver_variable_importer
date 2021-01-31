@@ -1,29 +1,19 @@
-from netCDF4 import Dataset
-from wrf import getvar, geo_bounds
 from os import path, makedirs, listdir
-from datetime import timedelta
 import rasterio
 from config import get_config
 from zipfile import ZipFile
+from geoserver_connection import geoserver_connection
 
 
-def read_vars(netcdf_file_path, var_name):
+def write_var(data, bounds, date, projection):
     output_dir = get_config('temp_dir')
-    v = getvar(Dataset(netcdf_file_path), var_name)
 
-    bounds = geo_bounds(v)
-    bottom_left = bounds.bottom_left
-    top_right = bounds.top_right
+    width = len(data[0])
+    height = len(data)
 
-    east = top_right.lon
-    west = bottom_left.lon
-    north = top_right.lat
-    south = bottom_left.lat
-
-    width = v.shape[1]
-    height = v.shape[0]
-
-    transform = rasterio.transform.from_bounds(west, south, east, north, width, height)
+    transform = rasterio.transform.from_bounds(
+        bounds['west'], bounds['south'], bounds['east'], bounds['north'], width, height
+    )
 
     try:
         makedirs(output_dir)
@@ -31,51 +21,17 @@ def read_vars(netcdf_file_path, var_name):
         pass
 
     with rasterio.open(
-            path.join(output_dir, f'{path.basename(netcdf_file_path)}.tif'),
+            path.join(output_dir, f'{path.basename(date)}.tif'),
             'w',
             driver='GTiff',
             height=height,
             width=width,
             count=1,
-            dtype=v.dtype,
-            crs=4326,
+            dtype=rasterio.float64,
+            crs=projection,
             transform=transform
     ) as dst:
-        dst.write(v.values[::-1], 1)
-
-
-def get_file_names(netcdf_base_path, start_date, end_date, domain, time_interval=timedelta(hours=3)):
-    current_date = start_date
-    files = []
-
-    while current_date <= end_date:
-        formatted_date = current_date.strftime('%Y-%m-%d_%H:%M:%S')
-        files.append(
-            path.join(netcdf_base_path, f'wrfout_{domain}_{formatted_date}')
-        )
-        current_date = current_date + time_interval
-
-    return files
-
-
-def extract_tiff_from_var(start_date, end_date, var_name, domain):
-    """
-    Set on temp_dir the tiff representations of the variable for the range of time in specified domain
-    :param start_date: Start date of reading files
-    :param end_date: End date of reading files
-    :param var_name: Name of a variable to extract its data inside a netcdf file
-    :param domain: Name of a domain run, as specified on the netcdf files
-    """
-    netcdf_base_path = get_config('data_dir')
-
-    file_names = get_file_names(
-        path.join(path.join(netcdf_base_path, domain), domain),
-        start_date, end_date, domain
-    )
-
-    for file in file_names:
-        read_vars(file, var_name)
-    return file_names
+        dst.write(data, 1)
 
 
 def write_property_file(file_name, configs, base_dir):
@@ -94,18 +50,16 @@ def zip_directory(directory, zip_path):
     zip_obj.close()
 
 
-def update_geoserver_layer(start_date, end_date, var_name, domain, geoserver):
+def update_geoserver_layer(var_name, data, bounds, date, projection, domain):
     workspace_name = get_config('geoserver.workspace')
     output_dir = get_config('temp_dir')
     store_name = f'{var_name}_{domain}'
-    layer_name = f'{store_name}_WMS'
     zip_path = path.join(output_dir, 'zip/data.zip')
     makedirs(path.dirname(zip_path))
 
-    store = geoserver.get_store(store_name, workspace_name)
+    store = geoserver_connection.get_store(store_name, workspace_name)
 
-    tiff_names = extract_tiff_from_var(start_date, end_date, var_name, domain)
-    # tiff_names = ['/media/manuel/Data/insmet/temp/A20171130_calcite.tif']
+    write_var(data, bounds, date, projection)
 
     if store is None:
         # create imageMosaic store and wms layer as described here
@@ -125,8 +79,8 @@ def update_geoserver_layer(start_date, end_date, var_name, domain, geoserver):
     zip_directory(output_dir, zip_path)
 
     if store is None:
-        store = geoserver.create_imagemosaic(store_name, zip_path, workspace=workspace_name)
-        geoserver.reload()
-        layer = geoserver.create_wmslayer(workspace_name, store, layer_name)
+        store = geoserver_connection.create_imagemosaic(store_name, zip_path, workspace=workspace_name)
+        geoserver_connection.reload()
+        # TODO:configure store
     else:
-        geoserver.add_granule(zip_path, store_name, workspace_name)
+        geoserver_connection.add_granule(zip_path, store_name, workspace_name)
