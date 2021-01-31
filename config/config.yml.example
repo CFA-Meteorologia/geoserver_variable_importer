@@ -1,0 +1,36 @@
+
+temp_dir: '/media/manuel/Data/insmet/temp'
+data_dir: '/media/manuel/Data/insmet/latest'
+domains:
+  - 'd01'
+  - 'd02'
+  - 'd03'
+
+postgres:
+  host: &postgres_host '172.17.0.1'
+  port: &postgres_port '6000'
+  database: &postgres_database 'geoserver'
+  schema: &postgres_schema 'image_mosaic'
+  user: &postgres_user 'postgres'
+  password: &postgres_password 'postgres'
+
+geoserver:
+  user: 'admin'
+  password: 'geoserver'
+  restUrl: 'http://localhost:8080/rest/'
+  hostUrl: 'http://localhost:8080/'
+  workspace: 'insmet'
+  datastore:
+    SPI: 'org.geotools.data.postgis.PostgisNGDataStoreFactory'
+    host: *postgres_host
+    port: *postgres_port
+    database: *postgres_database
+    schema: *postgres_schema
+    user: *postgres_user
+    passwd: *postgres_password
+  indexer:
+    TimeAttribute: 'ingestion'
+    Schema: '*the_geom:Polygon,location:String,ingestion:java.util.Date'
+    PropertyCollectors: 'TimestampFileNameExtractorSPI[timeregex](ingestion)'
+  timeregex:
+    regex: '[0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{2}:[0-9]{2}:[0-9]{2},format=yyyy-MM-dd_HH:mm:ss'
