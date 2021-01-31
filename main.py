@@ -24,7 +24,7 @@ def callback(ch, method, properties, body):
         data['var'],
         data['data'],
         data['bounds'],
-        data['date'],
+        data['date'].replace('T', '_'),
         data['projection'],
         data['domain'],
     )
@@ -45,7 +45,6 @@ def main():
         )
     )
     rabbit_mq_channel = connection.channel()
-
 
     rabbit_mq_channel.basic_consume(queue='geoserver-importer', on_message_callback=callback, auto_ack=False)
 
