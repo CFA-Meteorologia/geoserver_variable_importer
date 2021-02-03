@@ -1,11 +1,14 @@
 #!/usr/bin/env python
-from helpers import update_geoserver_layer
-import shutil
-import os
-from config import get_config
-import pika
-import sys
 import json
+import os
+import shutil
+import sys
+
+import pika
+
+import initializations
+from config import get_config
+from helpers import update_geoserver_layer
 
 temp_dir = get_config('temp_dir')
 

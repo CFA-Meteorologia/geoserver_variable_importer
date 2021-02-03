@@ -1,6 +1,7 @@
 from config import get_config
 from geoserver.catalog import Catalog
 
+
 geoserver = Catalog(
     get_config('geoserver.restUrl'),
     get_config('geoserver.user'),

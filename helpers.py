@@ -2,7 +2,7 @@ from os import path, makedirs, listdir
 import rasterio
 from config import get_config
 from zipfile import ZipFile
-from geoserver_connection import geoserver_connection
+from initializations.geoserver_connection import geoserver_connection
 
 
 def write_var(data, bounds, date, projection):
